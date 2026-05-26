@@ -1,0 +1,77 @@
+# =========================
+# ENV FILES (CRITICAL)
+# =========================
+.env
+.env.*
+!.env.example
+
+# =========================
+# DOCKER
+# =========================
+docker-compose.override.yml
+
+# =========================
+# NODE / NEXT.JS (web)
+# =========================
+web/node_modules
+web/.next
+web/out
+web/dist
+web/.vercel
+
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# =========================
+# LARAVEL (api)
+# =========================
+api/vendor
+api/node_modules
+api/storage/logs
+api/storage/framework/cache
+api/storage/framework/sessions
+api/storage/framework/views
+api/bootstrap/cache
+
+# keep only structure
+!api/storage/.gitkeep
+!api/bootstrap/cache/.gitkeep
+
+# =========================
+# PWA / NEXT BUILD CACHE
+# =========================
+web/public/sw.js
+web/public/workbox-*.js
+
+# =========================
+# DATABASE / BACKUPS
+# =========================
+*.sql
+*.sqlite
+*.sqlite3
+*.dump
+
+# =========================
+# SYSTEM FILES
+# =========================
+.DS_Store
+Thumbs.db
+
+# =========================
+# IDE / EDITORS
+# =========================
+.vscode
+.idea
+
+# =========================
+# LOG FILES
+# =========================
+*.log
+logs/
+
+# =========================
+# DOCKER VOLUMES (optional safety)
+# =========================
+mysql_data/
