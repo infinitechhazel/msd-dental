@@ -7,3 +7,5 @@ npm-debug.log
 dist
 build
 coverage
+Dockerfile
+docker-compose.yml

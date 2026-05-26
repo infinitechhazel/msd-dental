@@ -270,7 +270,7 @@ class AuthController extends Controller
     }
 
     /**
-     * Update profile (NO ADDRESS / CITY / ZIP)
+     * Update profile 
      */
     public function updateProfile(Request $request): JsonResponse
     {

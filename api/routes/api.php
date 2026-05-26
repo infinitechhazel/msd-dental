@@ -39,7 +39,7 @@ Route::get('/health', function () {
 
 // Authentication Routes
 Route::prefix('auth')->group(function () {
-    Route::post('/register', [AuthController::class, 'register']);
+    Route::middleware('throttle:5,1')->post('/register', [AuthController::class, 'register']);
 
     // Limit login attempts to 5 per minute per IP
     Route::middleware('throttle:5,1')->post('/login', [AuthController::class, 'login']);
@@ -168,8 +168,8 @@ Route::middleware('auth:sanctum')->group(function () {
 });
 
 // Settings Routes
-Route::get('/settings', [SettingController::class, 'show']);
 Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/settings', [SettingController::class, 'show']);
     Route::put('/settings', [SettingController::class, 'update']);
 });
 
