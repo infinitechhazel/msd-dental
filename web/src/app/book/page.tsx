@@ -1,206 +1,548 @@
-'use client'
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
-import { Calendar, Clock, User, Mail, Phone, CheckCircle, ArrowRight } from 'lucide-react';
-import { motion } from 'framer-motion';
+"use client"
 
-const fade = { initial: { opacity: 0, y: 30 }, whileInView: { opacity: 1, y: 0 }, viewport: { once: true }, transition: { duration: 0.6 } };
+import { useState } from "react"
+import {
+  Calendar,
+  Clock3,
+  User,
+  Mail,
+  Phone,
+  CheckCircle2,
+  ArrowRight,
+  Sparkles,
+  ShieldCheck,
+} from "lucide-react"
 
-const services = [
-  { value: 'implants', label: 'Dental Implants', duration: '2-3 hours', price: '2,500+' },
-  { value: 'whitening', label: 'Teeth Whitening', duration: '45 min', price: '350' },
-  { value: 'orthodontics', label: 'Orthodontics', duration: 'Consultation', price: '150' },
-  { value: 'skin', label: 'Skin Rejuvenation', duration: '60 min', price: '450' },
-  { value: 'contouring', label: 'Facial Contouring', duration: '45-90 min', price: '800+' },
-  { value: 'antiaging', label: 'Anti-Aging Treatment', duration: '60-90 min', price: '600+' },
-];
+import { motion } from "framer-motion"
 
-const timeSlots = ['9:00 AM', '9:30 AM', '10:00 AM', '10:30 AM', '11:00 AM', '11:30 AM', '1:00 PM', '1:30 PM', '2:00 PM', '2:30 PM', '3:00 PM', '3:30 PM', '4:00 PM', '4:30 PM'];
+import ProtectedNav from "@/components/layout/ProtectedNavbar"
+import { useAuthStore } from "@/store/authStore"
 
-function generateDays() {
-  const days = [];
-  const now = new Date();
-  for (let i = 1; i <= 28; i++) {
-    const d = new Date(now);
-    d.setDate(now.getDate() + i);
-    if (d.getDay() !== 0) days.push(d);
-  }
-  return days;
+import { Button } from "@/components/ui/button"
+import { Card } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+
+const fade = {
+  initial: { opacity: 0, y: 30 },
+  whileInView: { opacity: 1, y: 0 },
+  viewport: { once: true },
+  transition: { duration: 0.5 },
 }
 
-export default function Book() {
-  const [service, setService] = useState('');
-  const [selectedDate, setSelectedDate] = useState(null);
-  const [selectedTime, setSelectedTime] = useState('');
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
-  const [submitted, setSubmitted] = useState(false);
+const services = [
+  {
+    value: "implants",
+    label: "Dental Implants",
+    duration: "2–3 hours",
+    price: "₱2,500+",
+  },
+  {
+    value: "whitening",
+    label: "Teeth Whitening",
+    duration: "45 minutes",
+    price: "₱350",
+  },
+  {
+    value: "orthodontics",
+    label: "Orthodontics",
+    duration: "Consultation",
+    price: "₱150",
+  },
+  {
+    value: "skin",
+    label: "Skin Rejuvenation",
+    duration: "60 minutes",
+    price: "₱450",
+  },
+  {
+    value: "contouring",
+    label: "Facial Contouring",
+    duration: "45–90 minutes",
+    price: "₱800+",
+  },
+  {
+    value: "antiaging",
+    label: "Anti-Aging Treatment",
+    duration: "60–90 minutes",
+    price: "₱600+",
+  },
+]
 
-  const days = generateDays();
-  const selectedService = services.find(s => s.value === service);
+const timeSlots = [
+  "9:00 AM",
+  "9:30 AM",
+  "10:00 AM",
+  "10:30 AM",
+  "11:00 AM",
+  "11:30 AM",
+  "1:00 PM",
+  "1:30 PM",
+  "2:00 PM",
+  "2:30 PM",
+  "3:00 PM",
+  "3:30 PM",
+  "4:00 PM",
+  "4:30 PM",
+]
+
+function generateDays() {
+  const days = []
+  const now = new Date()
+
+  for (let i = 1; i <= 28; i++) {
+    const d = new Date(now)
+
+    d.setDate(now.getDate() + i)
+
+    if (d.getDay() !== 0) {
+      days.push(d)
+    }
+  }
+
+  return days
+}
+
+export default function BookPage() {
+  const { user, isLoggedIn } = useAuthStore()
+
+  const [service, setService] = useState("")
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null)
+  const [selectedTime, setSelectedTime] = useState("")
+  const [name, setName] = useState(user?.name || "")
+  const [email, setEmail] = useState(user?.email || "")
+  const [phone, setPhone] = useState("")
+  const [submitted, setSubmitted] = useState(false)
+
+  const days = generateDays()
+
+  const selectedService = services.find(
+    (s) => s.value === service
+  )
 
   if (submitted) {
     return (
-      <div className="min-h-screen bg-[#020617] flex items-center justify-center px-6 pt-20">
-        <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="text-center max-w-md">
-          <div className="w-16 h-16 rounded-full bg-cyan-400/10 flex items-center justify-center mx-auto mb-6">
-            <CheckCircle className="text-cyan-400" size={32} />
-          </div>
-          <h2 className="font-serif text-3xl text-white mb-4">Appointment Confirmed</h2>
-          <p className="text-slate-400 mb-2">
-            {selectedService?.label} {" — "} {selectedDate?.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })} at {selectedTime}
-          </p>
-          <p className="text-slate-500 text-sm">A confirmation has been sent to {email}. We look forward to seeing you.</p>
-        </motion.div>
+      <div className="min-h-screen bg-[#f8fafc]">
+        <ProtectedNav userRole={user?.role} />
+
+        <div className="flex min-h-screen items-center justify-center px-6 lg:pl-64">
+          <motion.div
+            initial={{ scale: 0.92, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="max-w-lg text-center"
+          >
+            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-emerald-50 border border-emerald-100">
+              <CheckCircle2 className="h-10 w-10 text-emerald-600" />
+            </div>
+
+            <h1 className="mt-6 text-4xl font-bold tracking-tight text-slate-900">
+              Appointment Confirmed
+            </h1>
+
+            <p className="mt-4 text-slate-600 leading-relaxed">
+              Your appointment for{" "}
+              <span className="font-semibold text-slate-900">
+                {selectedService?.label}
+              </span>{" "}
+              has been scheduled on{" "}
+              <span className="font-semibold text-slate-900">
+                {selectedDate?.toLocaleDateString("en-US", {
+                  weekday: "long",
+                  month: "long",
+                  day: "numeric",
+                })}
+              </span>{" "}
+              at{" "}
+              <span className="font-semibold text-slate-900">
+                {selectedTime}
+              </span>
+              .
+            </p>
+
+            <div className="mt-8 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+              <p className="text-sm text-slate-500">
+                A confirmation email has been sent to
+              </p>
+
+              <p className="mt-1 font-semibold text-slate-900">
+                {email}
+              </p>
+            </div>
+          </motion.div>
+        </div>
       </div>
-    );
+    )
   }
 
   return (
-    <div className="min-h-screen bg-[#020617]">
-      <div className="max-w-7xl mx-auto px-6 pt-28 pb-20">
-        <motion.div {...fade} className="mb-12">
-          <p className="text-cyan-400 text-sm uppercase tracking-[0.3em] mb-3">Booking</p>
-          <h1 className="font-serif text-4xl md:text-5xl text-white">Schedule Your Visit</h1>
-        </motion.div>
+    <div className="min-h-screen bg-[#f8fafc]">
+      <ProtectedNav userRole={user?.role} />
 
-        <div className="grid lg:grid-cols-3 gap-8">
-          {/* Form */}
-          <div className="lg:col-span-2 space-y-8">
-            {/* Service */}
-            <motion.div {...fade}>
-              <Card className="p-6 bg-white/5 border-white/10 backdrop-blur-sm">
-                <h3 className="text-white font-medium mb-4 flex items-center gap-2"><span className="w-6 h-6 rounded-full bg-cyan-400 text-slate-950 text-xs flex items-center justify-center font-bold">1</span> Select Service</h3>
-                <Select value={service} onValueChange={setService}>
-                  <SelectTrigger className="bg-white/5 border-white/10 text-white">
-                    <SelectValue placeholder="Choose a service" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {services.map(s => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </Card>
-            </motion.div>
+      <main className="lg:pl-64">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-10 pb-28 lg:pb-10">
 
-            {/* Date */}
-            <motion.div {...fade} transition={{ delay: 0.1 }}>
-              <Card className="p-6 bg-white/5 border-white/10 backdrop-blur-sm">
-                <h3 className="text-white font-medium mb-4 flex items-center gap-2"><span className="w-6 h-6 rounded-full bg-cyan-400 text-slate-950 text-xs flex items-center justify-center font-bold">2</span> Choose Date</h3>
-                <div className="grid grid-cols-7 gap-2">
-                  {days.slice(0, 21).map((d, i) => (
-                    <button
-                      key={i}
-                      onClick={() => setSelectedDate(d)}
-                      className={`p-2 rounded-lg text-center text-sm transition-all ${
-                        selectedDate?.toDateString() === d.toDateString()
-                          ? 'bg-cyan-400 text-slate-950 shadow-[0_0_15px_rgba(34,211,238,0.3)]'
-                          : 'bg-white/5 text-slate-400 hover:bg-white/10'
-                      }`}
-                    >
-                      <div className="text-[10px] opacity-60">{d.toLocaleDateString('en-US', { weekday: 'short' })}</div>
-                      <div className="font-medium">{d.getDate()}</div>
-                    </button>
-                  ))}
-                </div>
-              </Card>
-            </motion.div>
+          {/* HEADER */}
+          <motion.div {...fade} className="mb-10">
+            <h1 className="mt-5 text-4xl lg:text-5xl font-bold tracking-tight text-slate-900">
+              Schedule Your Visit
+            </h1>
 
-            {/* Time */}
-            <motion.div {...fade} transition={{ delay: 0.2 }}>
-              <Card className="p-6 bg-white/5 border-white/10 backdrop-blur-sm">
-                <h3 className="text-white font-medium mb-4 flex items-center gap-2"><span className="w-6 h-6 rounded-full bg-cyan-400 text-slate-950 text-xs flex items-center justify-center font-bold">3</span> Select Time</h3>
-                <div className="grid grid-cols-4 sm:grid-cols-7 gap-2">
-                  {timeSlots.map(t => (
-                    <button
-                      key={t}
-                      onClick={() => setSelectedTime(t)}
-                      className={`py-2 px-3 rounded-lg text-sm transition-all ${
-                        selectedTime === t
-                          ? 'bg-cyan-400 text-slate-950 shadow-[0_0_15px_rgba(34,211,238,0.3)]'
-                          : 'bg-white/5 text-slate-400 hover:bg-white/10'
-                      }`}
-                    >
-                      {t}
-                    </button>
-                  ))}
-                </div>
-              </Card>
-            </motion.div>
+            <p className="mt-4 max-w-2xl text-slate-600 leading-relaxed">
+              Book your dental or aesthetic appointment
+              through our modern patient experience platform.
+            </p>
+          </motion.div>
 
-            {/* Patient Info */}
-            <motion.div {...fade} transition={{ delay: 0.3 }}>
-              <Card className="p-6 bg-white/5 border-white/10 backdrop-blur-sm">
-                <h3 className="text-white font-medium mb-4 flex items-center gap-2"><span className="w-6 h-6 rounded-full bg-cyan-400 text-slate-950 text-xs flex items-center justify-center font-bold">4</span> Your Information</h3>
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div>
-                    <Label className="text-slate-400 text-xs mb-1.5 flex items-center gap-1"><User size={12} /> Full Name</Label>
-                    <Input value={name} onChange={e => setName(e.target.value)} className="bg-white/5 border-white/10 text-white" placeholder="John Doe" />
-                  </div>
-                  <div>
-                    <Label className="text-slate-400 text-xs mb-1.5 flex items-center gap-1"><Mail size={12} /> Email</Label>
-                    <Input value={email} onChange={e => setEmail(e.target.value)} type="email" className="bg-white/5 border-white/10 text-white" placeholder="john@example.com" />
-                  </div>
-                  <div className="md:col-span-2">
-                    <Label className="text-slate-400 text-xs mb-1.5 flex items-center gap-1"><Phone size={12} /> Phone</Label>
-                    <Input value={phone} onChange={e => setPhone(e.target.value)} className="bg-white/5 border-white/10 text-white" placeholder="+1 (555) 000-0000" />
-                  </div>
-                </div>
-              </Card>
-            </motion.div>
-          </div>
+          <div className="grid gap-8 lg:grid-cols-3">
 
-          {/* Summary */}
-          <div className="lg:col-span-1">
-            <div className="sticky top-24">
-              <motion.div {...fade} transition={{ delay: 0.2 }}>
-                <Card className="p-6 bg-white/5 border-white/10 backdrop-blur-sm">
-                  <h3 className="text-white font-medium mb-6">Appointment Summary</h3>
-                  <div className="space-y-4 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-slate-500">Service</span>
-                      <span className="text-white">{selectedService?.label || '\u2014'}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-slate-500">Date</span>
-                      <span className="text-white">{selectedDate ? selectedDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '\u2014'}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-slate-500">Time</span>
-                      <span className="text-white">{selectedTime || '\u2014'}</span>
-                    </div>
-                    <div className="border-t border-white/10 pt-4 flex justify-between">
-                      <span className="text-slate-500">Duration</span>
-                      <span className="text-white">{selectedService?.duration || '\u2014'}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-slate-500">Starting at</span>
-                      <Badge variant="outline" className="border-cyan-400/30 text-cyan-400">{selectedService?.price || '\u2014'}</Badge>
-                    </div>
-                  </div>
-                  <div className="mt-6 pt-4 border-t border-white/10">
-                    <div className="flex items-center gap-2 text-slate-500 text-xs mb-1"><Calendar size={12} /> {"MDS Dental & Aesthetic Clinic"}</div>
-                    <div className="flex items-center gap-2 text-slate-500 text-xs"><Clock size={12} /> {"Mon\u2013Sat: 9AM\u20137PM"}</div>
-                  </div>
-                  <Button
-                    onClick={() => { if (service && selectedDate && selectedTime && name && email) setSubmitted(true); }}
-                    disabled={!service || !selectedDate || !selectedTime || !name || !email}
-                    className="w-full mt-6 bg-cyan-400 text-slate-950 hover:bg-cyan-300 hover:shadow-[0_0_20px_rgba(34,211,238,0.4)] transition-all disabled:opacity-30"
-                    size="lg"
+            {/* LEFT */}
+            <div className="lg:col-span-2 space-y-6">
+
+              {/* SERVICE */}
+              <motion.div {...fade}>
+                <Card className="rounded-[30px] border border-slate-200 bg-white p-6 shadow-sm">
+                  <SectionTitle
+                    step="01"
+                    title="Select Service"
+                  />
+
+                  <Select
+                    value={service}
+                    onValueChange={setService}
                   >
-                    Confirm Booking <ArrowRight size={16} className="ml-2" />
-                  </Button>
+                    <SelectTrigger className="h-14 rounded-2xl border-slate-200 bg-slate-50 text-slate-900 focus:ring-4 focus:ring-blue-100">
+                      <SelectValue placeholder="Choose a treatment or service" />
+                    </SelectTrigger>
+
+                    <SelectContent>
+                      {services.map((s) => (
+                        <SelectItem
+                          key={s.value}
+                          value={s.value}
+                        >
+                          {s.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </Card>
+              </motion.div>
+
+              {/* DATE */}
+              <motion.div {...fade}>
+                <Card className="rounded-[30px] border border-slate-200 bg-white p-6 shadow-sm">
+                  <SectionTitle
+                    step="02"
+                    title="Choose Date"
+                  />
+
+                  <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-7 gap-3">
+                    {days.slice(0, 21).map((d, i) => {
+                      const active =
+                        selectedDate?.toDateString() ===
+                        d.toDateString()
+
+                      return (
+                        <button
+                          key={i}
+                          onClick={() => setSelectedDate(d)}
+                          className={`rounded-2xl border p-4 transition-all ${
+                            active
+                              ? "border-blue-600 bg-blue-600 text-white shadow-lg"
+                              : "border-slate-200 bg-slate-50 hover:border-blue-200 hover:bg-white"
+                          }`}
+                        >
+                          <p
+                            className={`text-xs font-medium ${
+                              active
+                                ? "text-blue-100"
+                                : "text-slate-500"
+                            }`}
+                          >
+                            {d.toLocaleDateString("en-US", {
+                              weekday: "short",
+                            })}
+                          </p>
+
+                          <p className="mt-1 text-lg font-bold">
+                            {d.getDate()}
+                          </p>
+                        </button>
+                      )
+                    })}
+                  </div>
+                </Card>
+              </motion.div>
+
+              {/* TIME */}
+              <motion.div {...fade}>
+                <Card className="rounded-[30px] border border-slate-200 bg-white p-6 shadow-sm">
+                  <SectionTitle
+                    step="03"
+                    title="Select Time"
+                  />
+
+                  <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 gap-3">
+                    {timeSlots.map((t) => {
+                      const active = selectedTime === t
+
+                      return (
+                        <button
+                          key={t}
+                          onClick={() => setSelectedTime(t)}
+                          className={`rounded-2xl border px-4 py-3 text-sm font-semibold transition-all ${
+                            active
+                              ? "border-blue-600 bg-blue-600 text-white shadow-md"
+                              : "border-slate-200 bg-slate-50 text-slate-700 hover:border-blue-200 hover:bg-white"
+                          }`}
+                        >
+                          {t}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </Card>
+              </motion.div>
+
+              {/* INFO */}
+              <motion.div {...fade}>
+                <Card className="rounded-[30px] border border-slate-200 bg-white p-6 shadow-sm">
+                  <SectionTitle
+                    step="04"
+                    title="Your Information"
+                  />
+
+                  <div className="grid gap-5 md:grid-cols-2">
+
+                    <Field
+                      icon={<User className="h-4 w-4" />}
+                      label="Full Name"
+                    >
+                      <Input
+                        value={name}
+                        onChange={(e) =>
+                          setName(e.target.value)
+                        }
+                        placeholder="Juan Dela Cruz"
+                        className="h-14 rounded-2xl border-slate-200 bg-slate-50"
+                      />
+                    </Field>
+
+                    <Field
+                      icon={<Mail className="h-4 w-4" />}
+                      label="Email Address"
+                    >
+                      <Input
+                        value={email}
+                        onChange={(e) =>
+                          setEmail(e.target.value)
+                        }
+                        type="email"
+                        placeholder="you@example.com"
+                        className="h-14 rounded-2xl border-slate-200 bg-slate-50"
+                      />
+                    </Field>
+
+                    <Field
+                      icon={<Phone className="h-4 w-4" />}
+                      label="Phone Number"
+                      full
+                    >
+                      <Input
+                        value={phone}
+                        onChange={(e) =>
+                          setPhone(e.target.value)
+                        }
+                        placeholder="+63 912 345 6789"
+                        className="h-14 rounded-2xl border-slate-200 bg-slate-50"
+                      />
+                    </Field>
+                  </div>
+
+                  {isLoggedIn && (
+                    <div className="mt-6 flex items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
+                      <ShieldCheck className="h-5 w-5 text-emerald-600 shrink-0" />
+
+                      <p className="text-sm text-emerald-700">
+                        Your account information has been
+                        automatically filled for faster booking.
+                      </p>
+                    </div>
+                  )}
                 </Card>
               </motion.div>
             </div>
+
+            {/* RIGHT */}
+            <div className="lg:col-span-1">
+              <div className="sticky top-24">
+                <motion.div {...fade}>
+                  <Card className="rounded-[30px] border border-slate-200 bg-white p-7 shadow-sm">
+
+                    <h3 className="text-xl font-bold text-slate-900">
+                      Appointment Summary
+                    </h3>
+
+                    <div className="mt-6 space-y-5">
+
+                      <SummaryRow
+                        label="Service"
+                        value={
+                          selectedService?.label || "—"
+                        }
+                      />
+
+                      <SummaryRow
+                        label="Date"
+                        value={
+                          selectedDate
+                            ? selectedDate.toLocaleDateString(
+                                "en-US",
+                                {
+                                  month: "long",
+                                  day: "numeric",
+                                }
+                              )
+                            : "—"
+                        }
+                      />
+
+                      <SummaryRow
+                        label="Time"
+                        value={selectedTime || "—"}
+                      />
+
+                      <SummaryRow
+                        label="Duration"
+                        value={
+                          selectedService?.duration || "—"
+                        }
+                      />
+
+                      <div className="rounded-2xl bg-blue-50 border border-blue-100 p-5">
+                        <p className="text-sm text-slate-500">
+                          Starting Price
+                        </p>
+
+                        <p className="mt-2 text-3xl font-bold text-blue-700">
+                          {selectedService?.price || "—"}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="mt-8 border-t border-slate-100 pt-6 space-y-3">
+                      <div className="flex items-center gap-2 text-sm text-slate-500">
+                        <Calendar className="h-4 w-4" />
+                        MDS Dental & Aesthetic Clinic
+                      </div>
+
+                      <div className="flex items-center gap-2 text-sm text-slate-500">
+                        <Clock3 className="h-4 w-4" />
+                        Monday – Saturday • 9AM – 7PM
+                      </div>
+                    </div>
+
+                    <Button
+                      onClick={() => {
+                        if (
+                          service &&
+                          selectedDate &&
+                          selectedTime &&
+                          name &&
+                          email
+                        ) {
+                          setSubmitted(true)
+                        }
+                      }}
+                      disabled={
+                        !service ||
+                        !selectedDate ||
+                        !selectedTime ||
+                        !name ||
+                        !email
+                      }
+                      className="mt-8 h-14 w-full rounded-2xl bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-40"
+                    >
+                      Confirm Booking
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </Button>
+                  </Card>
+                </motion.div>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
+      </main>
     </div>
-  );
+  )
+}
+
+function SectionTitle({
+  step,
+  title,
+}: {
+  step: string
+  title: string
+}) {
+  return (
+    <div className="mb-6 flex items-center gap-3">
+      <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-blue-600 text-sm font-bold text-white">
+        {step}
+      </div>
+
+      <h3 className="text-lg font-bold text-slate-900">
+        {title}
+      </h3>
+    </div>
+  )
+}
+
+function Field({
+  label,
+  icon,
+  children,
+  full,
+}: {
+  label: string
+  icon: React.ReactNode
+  children: React.ReactNode
+  full?: boolean
+}) {
+  return (
+    <div className={full ? "md:col-span-2" : ""}>
+      <Label className="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-700">
+        {icon}
+        {label}
+      </Label>
+
+      {children}
+    </div>
+  )
+}
+
+function SummaryRow({
+  label,
+  value,
+}: {
+  label: string
+  value: string
+}) {
+  return (
+    <div className="flex items-center justify-between gap-4">
+      <p className="text-sm text-slate-500">
+        {label}
+      </p>
+
+      <p className="text-sm font-semibold text-slate-900 text-right">
+        {value}
+      </p>
+    </div>
+  )
 }
