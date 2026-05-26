@@ -16,37 +16,43 @@ import { useSettingsStore } from "@/store/settingsStore"
 
 const queryClient = new QueryClient()
 
+const AUTH_ROUTES = ["/login", "/register", "/verify-email"]
+
 export default function ClientLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
-  const showHeader = pathname !== "/login" && pathname !== "/register" && pathname !== "/admin" && !pathname.startsWith("/admin/")
+  const { isLoggedIn, initializeAuth } = useAuthStore()
   const { fetchSettings } = useSettingsStore()
 
   useEffect(() => {
     fetchSettings()
   }, [])
 
-  // Initialize auth from storage on mount
-  const initializeAuth = useAuthStore((state) => state.initializeAuth)
-
   useEffect(() => {
     initializeAuth()
   }, [initializeAuth])
 
+  const isAuthRoute = AUTH_ROUTES.some(
+    (route) => pathname === route || pathname.startsWith(route + "/")
+  )
+  const isAdminRoute = pathname === "/admin" || pathname.startsWith("/admin/")
+
+  // Never show navbar/footer on auth pages or admin routes
+  // Also never show when user is logged in (they get dashboard layout)
+  const showChrome = !isAuthRoute && !isAdminRoute && !isLoggedIn
+
   return (
-    <>
-      <QueryClientProvider client={queryClient}>
-        <TooltipProvider>
-          <div className="min-h-screen flex flex-col">
-            {showHeader && <Header />}
-            <main className="flex-1">{children}</main>
-            {showHeader && <Footer />}
-          </div>
-          {showHeader && <FloatingSocialMedia />}
-          {showHeader && <CustomerServiceChatbot />}
-          <Toaster />
-          <SonnerToaster />
-        </TooltipProvider>
-      </QueryClientProvider>
-    </>
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <div className="min-h-screen flex flex-col">
+          {showChrome && <Header />}
+          <main className="flex-1">{children}</main>
+          {showChrome && <Footer />}
+        </div>
+        {showChrome && <FloatingSocialMedia />}
+        {showChrome && <CustomerServiceChatbot />}
+        <Toaster />
+        <SonnerToaster />
+      </TooltipProvider>
+    </QueryClientProvider>
   )
 }

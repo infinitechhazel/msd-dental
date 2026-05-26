@@ -3,7 +3,7 @@
 import type React from "react"
 import { useState } from "react"
 import { motion } from "framer-motion"
-import { User, Mail, Lock, Eye, EyeOff, Phone, MapPin, Building, Hash, ArrowLeftCircle } from "lucide-react"
+import { User, Mail, Lock, Eye, EyeOff, Phone, ArrowLeftCircle } from "lucide-react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Toaster } from "@/components/ui/sonner"
@@ -20,6 +20,7 @@ export default function RegisterPage() {
     password: "",
     password_confirmation: "",
   })
+
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
@@ -70,9 +71,7 @@ export default function RegisterPage() {
     try {
       const response = await fetch("/api/auth/register", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
       })
 
@@ -81,174 +80,185 @@ export default function RegisterPage() {
       if (data.success) {
         toast.success("Registration Successful!", {
           description: "Please check your email to verify your account.",
-          duration: 5000,
         })
 
-        setTimeout(() => {
-          router.push("/login")
-        }, 2000)
+        setTimeout(() => router.push("/login"), 1500)
       } else {
         toast.error("Registration Failed", {
           description: data.message || "Registration failed. Please try again.",
         })
       }
-    } catch (error) {
-      console.error("Registration error:", error)
+    } catch {
       toast.error("Connection Error", {
-        description: "Unable to register. Please check your connection and try again.",
+        description: "Unable to register. Please check your connection.",
       })
     } finally {
       setIsSubmitting(false)
     }
   }
 
+  const Field = ({
+    label,
+    icon: Icon,
+    type = "text",
+    value,
+    onChange,
+    placeholder,
+  }: any) => (
+    <div className="space-y-1.5">
+      <label className="text-[11px] uppercase tracking-widest text-slate-400 flex items-center gap-2">
+        <Icon className="w-3.5 h-3.5 text-cyan-400" />
+        {label}
+      </label>
+
+      <input
+        type={type}
+        value={value}
+        onChange={onChange}
+        placeholder={placeholder}
+        className="w-full h-12 rounded-xl bg-[#060e1e] border border-white/[0.08]
+                   px-4 text-white placeholder:text-slate-600
+                   focus:outline-none focus:ring-2 focus:ring-cyan-400/10
+                   focus:border-cyan-400/50 transition"
+      />
+    </div>
+  )
+
   return (
     <>
-      <div className="min-h-screen bg-[#0b1d26] flex items-center justify-center px-4 py-10 relative overflow-hidden">
+      <div className="min-h-screen bg-[#020617] flex items-center justify-center px-4 py-10 relative overflow-hidden">
 
-        {/* Background glow */}
-        <div className="absolute inset-0 opacity-30">
-          <div className="absolute top-20 left-10 w-40 h-40 bg-[#d4a24c]/10 blur-3xl rounded-full" />
-          <div className="absolute bottom-20 right-10 w-40 h-40 bg-[#d4a24c]/10 blur-3xl rounded-full" />
-        </div>
+        {/* GRID */}
+        <div
+          className="absolute inset-0 opacity-[0.04]"
+          style={{
+            backgroundImage: `linear-gradient(rgba(56,189,248,1) 1px, transparent 1px),
+                              linear-gradient(90deg, rgba(56,189,248,1) 1px, transparent 1px)`,
+            backgroundSize: "48px 48px",
+          }}
+        />
 
-        {/* Steam overlay */}
-        <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
-          {[...Array(6)].map((_, i) => (
-            <motion.div
-              key={`steam1-${i}`}
-              initial={{ y: 100, opacity: 0 }}
-              animate={{
-                y: -800,
-                opacity: [0.4, 0.1, 0.4],
-                x: [0, 20, -20, 0],
-              }}
-              transition={{
-                duration: 6 + i * 1.5,
-                repeat: Infinity,
-                delay: i * 0.8,
-                ease: "easeInOut",
-              }}
-              className="absolute bottom-0 w-32 h-32 bg-white/40 rounded-full blur-2xl"
-              style={{ left: `${10 + i * 15}%` }}
-            />
-          ))}
-        </div>
+        {/* GLOWS */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[700px] h-[400px] bg-cyan-500/10 blur-[120px] rounded-full" />
+        <div className="absolute bottom-[-80px] left-[-60px] w-72 h-72 bg-blue-600/10 blur-[100px] rounded-full" />
+        <div className="absolute top-1/3 right-[-80px] w-64 h-64 bg-sky-400/10 blur-[100px] rounded-full" />
 
-        {/* Card */}
-        <div className="relative w-full max-w-3xl">
-          <div className="bg-[#0f2a33] border border-[#d4a24c]/30 rounded-2xl p-8 shadow-[0_0_30px_rgba(212,162,76,0.25)] backdrop-blur">
+        {/* CARD */}
+        <motion.div
+          initial={{ opacity: 0, y: 24 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="relative w-full max-w-2xl z-10"
+        >
+          <div className="absolute -inset-px rounded-2xl bg-gradient-to-b from-cyan-400/30 via-blue-500/10 to-transparent" />
 
-            {/* Back Button */}
+          <div className="relative bg-[#0a1628]/90 border border-white/[0.08]
+                          rounded-2xl p-6 sm:p-8 backdrop-blur-xl">
+
+            {/* BACK */}
             <button
               onClick={() => router.back()}
-              className="flex items-center gap-2 text-white/60 hover:text-white/80 transition"
+              className="flex items-center gap-2 text-slate-500 hover:text-cyan-400 mb-6"
             >
-              <ArrowLeftCircle className="w-6 h-6" />
+              <ArrowLeftCircle className="w-5 h-5" />
+              <span className="text-xs uppercase tracking-widest">Back</span>
             </button>
 
-            {/* Header */}
+            {/* HEADER */}
             <div className="text-center mb-8">
-              <h1 className={`text-3xl font-bold text-white`}>Create your Account</h1>
-              <p className="text-[#d4a24c] mt-1">Lumè Bean and Bar</p>
+              <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-cyan-400/10 border border-cyan-400/20 mb-4">
+                <User className="text-cyan-400" />
+              </div>
+
+              <h1 className="text-2xl font-semibold text-white">
+                Create Account
+              </h1>
+              <p className="text-cyan-400/80 text-xs uppercase tracking-[0.2em] mt-1">
+                MSD Dental & Aesthetic Clinic
+              </p>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-6">
 
-              {/* Name + Email */}
-              <div className="grid md:grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm text-white/60 mb-2 block flex items-center gap-2">
-                    <User className="w-4 h-4 text-[#d4a24c]" />
-                    Full Name
-                  </label>
-                  <input
-                    value={formData.name}
-                    onChange={(e) => handleInputChange("name", e.target.value)}
-                    required
-                    disabled={isSubmitting}
-                    placeholder="Enter your name"
-                    className="w-full h-12 rounded-lg bg-[#0b1d26] border border-white/10 px-4 text-white placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-[#d4a24c]/40"
-                  />
-                </div>
+              {/* GRID RESPONSIVE FIELDS */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
-                <div>
-                  <label className="text-sm text-white/60 mb-2 block flex items-center gap-2">
-                    <Mail className="w-4 h-4 text-[#d4a24c]" />
-                    Email
-                  </label>
-                  <input
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) => handleInputChange("email", e.target.value)}
-                    required
-                    disabled={isSubmitting}
-                    placeholder="you@email.com"
-                    className="w-full h-12 rounded-lg bg-[#0b1d26] border border-white/10 px-4 text-white placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-[#d4a24c]/40"
-                  />
-                </div>
-              </div>
-
-              {/* Phone */}
-              <div>
-                <label className="text-sm text-white/60 mb-2 block flex items-center gap-2">
-                  <Phone className="w-4 h-4 text-[#d4a24c]" />
-                  Phone
-                </label>
-                <input
-                  value={formData.phone}
-                  onChange={(e) => handleInputChange("phone", e.target.value)}
-                  placeholder="09123456789"
-                  maxLength={11}
-                  disabled={isSubmitting}
-                  className="w-full h-12 rounded-lg bg-[#0b1d26] border border-white/10 px-4 text-white placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-[#d4a24c]/40"
+                <Field
+                  label="Full Name"
+                  icon={User}
+                  value={formData.name}
+                  onChange={(e: any) => handleInputChange("name", e.target.value)}
+                  placeholder="John Doe"
                 />
+
+                <Field
+                  label="Email"
+                  icon={Mail}
+                  type="email"
+                  value={formData.email}
+                  onChange={(e: any) => handleInputChange("email", e.target.value)}
+                  placeholder="you@email.com"
+                />
+
+                <div className="md:col-span-2">
+                  <Field
+                    label="Phone Number"
+                    icon={Phone}
+                    value={formData.phone}
+                    onChange={(e: any) => handleInputChange("phone", e.target.value)}
+                    placeholder="09123456789"
+                  />
+                </div>
               </div>
 
-              {/* Passwords */}
-              <div className="grid md:grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm text-white/60 mb-2 block flex items-center gap-2">
-                    <Lock className="w-4 h-4 text-[#d4a24c]" />
+              {/* PASSWORDS */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+                {/* PASSWORD */}
+                <div className="space-y-1.5">
+                  <label className="text-[11px] uppercase tracking-widest text-slate-400 flex items-center gap-2">
+                    <Lock className="w-3.5 h-3.5 text-cyan-400" />
                     Password
                   </label>
+
                   <div className="relative">
                     <input
                       type={showPassword ? "text" : "password"}
                       value={formData.password}
                       onChange={(e) => handleInputChange("password", e.target.value)}
-                      required
-                      disabled={isSubmitting}
-                      className="w-full h-12 rounded-lg bg-[#0b1d26] border border-white/10 px-4 pr-10 text-white focus:outline-none focus:ring-2 focus:ring-[#d4a24c]/40"
+                      className="w-full h-12 rounded-xl bg-[#060e1e] border border-white/[0.08]
+                                 px-4 pr-10 text-white focus:ring-2 focus:ring-cyan-400/10"
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-[#d4a24c]"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400"
                     >
                       {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                     </button>
                   </div>
                 </div>
 
-                <div>
-                  <label className="text-sm text-white/60 mb-2 block flex items-center gap-2">
-                    <Lock className="w-4 h-4 text-[#d4a24c]" />
+                {/* CONFIRM PASSWORD */}
+                <div className="space-y-1.5">
+                  <label className="text-[11px] uppercase tracking-widest text-slate-400 flex items-center gap-2">
+                    <Lock className="w-3.5 h-3.5 text-cyan-400" />
                     Confirm Password
                   </label>
+
                   <div className="relative">
                     <input
                       type={showConfirmPassword ? "text" : "password"}
                       value={formData.password_confirmation}
-                      onChange={(e) => handleInputChange("password_confirmation", e.target.value)}
-                      required
-                      disabled={isSubmitting}
-                      className="w-full h-12 rounded-lg bg-[#0b1d26] border border-white/10 px-4 pr-10 text-white focus:outline-none focus:ring-2 focus:ring-[#d4a24c]/40"
+                      onChange={(e) =>
+                        handleInputChange("password_confirmation", e.target.value)
+                      }
+                      className="w-full h-12 rounded-xl bg-[#060e1e] border border-white/[0.08]
+                                 px-4 pr-10 text-white focus:ring-2 focus:ring-cyan-400/10"
                     />
                     <button
                       type="button"
                       onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-[#d4a24c]"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400"
                     >
                       {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                     </button>
@@ -256,31 +266,30 @@ export default function RegisterPage() {
                 </div>
               </div>
 
-              {/* Submit */}
+              {/* SUBMIT */}
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full h-12 rounded-full bg-[#d4a24c] text-black font-semibold hover:brightness-110 transition disabled:opacity-50"
+                className="w-full h-12 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-500
+                           hover:from-cyan-400 hover:to-blue-400 text-white font-semibold
+                           transition disabled:opacity-60"
               >
                 {isSubmitting ? "Creating Account..." : "Create Account"}
               </button>
 
-              {/* Footer */}
-              <div className="text-center pt-2">
-                <p className="text-white/60">
-                  Already have an account?{" "}
-                  <Link href="/login" className="text-[#d4a24c] hover:underline">
-                    Login
-                  </Link>
-                </p>
-              </div>
+              {/* FOOTER */}
+              <p className="text-center text-sm text-slate-500">
+                Already have an account?{" "}
+                <Link href="/login" className="text-cyan-400 hover:text-cyan-300">
+                  Sign in
+                </Link>
+              </p>
             </form>
           </div>
-        </div>
+        </motion.div>
       </div>
 
-      <Toaster />
+      <Toaster theme="dark" />
     </>
-
   )
 }

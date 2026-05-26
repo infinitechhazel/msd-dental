@@ -172,11 +172,22 @@ export default function Navbar() {
               )}
             </div>
           ) : mounted ? (
-            <Link href="/book">
-              <Button className="bg-cyan-400 text-slate-950 hover:bg-cyan-300 font-medium text-sm px-6 hover:shadow-[0_0_20px_rgba(34,211,238,0.4)] transition-all">
-                Book Appointment
-              </Button>
-            </Link>
+            /* Login + Book Appointment side by side */
+            <div className="flex items-center gap-2">
+              <Link href="/login">
+                <Button
+                  variant="ghost"
+                  className="text-slate-300 hover:text-white hover:bg-white/[0.07] border border-white/[0.12] font-medium text-sm px-5"
+                >
+                  Log in
+                </Button>
+              </Link>
+              <Link href="/book">
+                <Button className="bg-cyan-400 text-slate-950 hover:bg-cyan-300 font-medium text-sm px-6 hover:shadow-[0_0_20px_rgba(34,211,238,0.4)] transition-all">
+                  Book Appointment
+                </Button>
+              </Link>
+            </div>
           ) : null}
         </div>
 
@@ -248,13 +259,23 @@ export default function Navbar() {
             </Link>
           ))}
 
-          {/* Book button — only when logged out */}
+          {/* Login + Book buttons — only when logged out */}
           {mounted && !isLoggedIn && (
-            <Link href="/book">
-              <Button className="w-full mt-4 bg-cyan-400 text-slate-950 hover:bg-cyan-300">
-                Book Appointment
-              </Button>
-            </Link>
+            <div className="flex flex-col gap-2 mt-4">
+              <Link href="/book">
+                <Button className="w-full bg-cyan-400 text-slate-950 hover:bg-cyan-300">
+                  Book Appointment
+                </Button>
+              </Link>
+              <Link href="/login">
+                <Button
+                  variant="ghost"
+                  className="w-full text-slate-300 hover:text-white hover:bg-white/[0.07] border border-white/[0.12] font-medium"
+                >
+                  Log in
+                </Button>
+              </Link>
+            </div>
           )}
         </div>
       )}
