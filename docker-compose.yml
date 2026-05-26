@@ -28,7 +28,7 @@ services:
 
     container_name: laravel_api
     working_dir: /var/www
-
+    user: "${UID}:${GID}"
     volumes:
       - ./api:/var/www
 
@@ -61,10 +61,11 @@ services:
 
     container_name: next_web
     working_dir: /app
-
+    user: "${UID}:${GID}"
     volumes:
       - ./web:/app
       - /app/node_modules
+      - /app/.next
 
     ports:
       - "${NEXT_PORT}:3000"
