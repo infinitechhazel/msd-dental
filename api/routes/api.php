@@ -17,7 +17,7 @@ use App\Http\Controllers\TestimonialController;
 use App\Http\Controllers\UserController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Admin\ServiceController;
+use App\Http\Controllers\ServiceController;
 
 /*
 |--------------------------------------------------------------------------
@@ -150,7 +150,6 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Announcement Management
     Route::post('/announcements', [AnnouncementController::class, 'store']);
-
 });
 
 Route::put('/testimonials/{testimonial}', [TestimonialController::class, 'update']);
@@ -189,10 +188,7 @@ Route::put('/support-tickets/{supportTicket}', [SupportTicketController::class, 
 
 
 //Services
-
-
-Route::prefix('admin')->middleware(['auth:sanctum'])
+Route::middleware(['auth:sanctum'])
     ->group(function () {
         Route::apiResource('services', ServiceController::class);
-
     });

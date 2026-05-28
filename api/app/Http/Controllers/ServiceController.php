@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Admin;
+namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Models\Service;
@@ -9,9 +9,6 @@ use Illuminate\Support\Str;
 
 class ServiceController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index(Request $request)
     {
         $query = Service::query();
@@ -37,17 +34,11 @@ class ServiceController extends Controller
             $query->where('status', $request->status);
         }
 
-        $services = $query
-            ->latest()
-            ->paginate(10)
-            ->withQueryString();
+        $services = $query->latest()->paginate(10)->withQueryString();
 
         return response()->json($services);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -61,9 +52,7 @@ class ServiceController extends Controller
 
         // HANDLE IMAGE
         if ($request->hasFile('image')) {
-            $validated['image'] = $this->handleImageUpload(
-                $request->file('image')
-            );
+            $validated['image'] = $this->handleImageUpload($request->file('image'));
         }
 
         $service = Service::create($validated);
@@ -74,17 +63,11 @@ class ServiceController extends Controller
         ], 201);
     }
 
-    /**
-     * Display the specified resource.
-     */
     public function show(Service $service)
     {
         return response()->json($service);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
     public function update(Request $request, Service $service)
     {
         $validated = $request->validate([
@@ -99,17 +82,16 @@ class ServiceController extends Controller
         // HANDLE IMAGE UPDATE
         if ($request->hasFile('image')) {
 
-            // DELETE OLD IMAGE
-            if (
-                $service->image &&
-                file_exists(public_path('images/services/' . $service->image))
-            ) {
-                unlink(public_path('images/services/' . $service->image));
+            // DELETE OLD IMAGE (FIXED)
+            if ($service->image) {
+                $oldPath = public_path('images/services/' . $service->image);
+
+                if (file_exists($oldPath)) {
+                    unlink($oldPath);
+                }
             }
 
-            $validated['image'] = $this->handleImageUpload(
-                $request->file('image')
-            );
+            $validated['image'] = $this->handleImageUpload($request->file('image'));
         }
 
         $service->update($validated);
@@ -120,17 +102,15 @@ class ServiceController extends Controller
         ]);
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
     public function destroy(Service $service)
     {
-        // DELETE IMAGE
-        if (
-            $service->image &&
-            file_exists(public_path('images/services/' . $service->image))
-        ) {
-            unlink(public_path('images/services/' . $service->image));
+        // DELETE IMAGE (FIXED)
+        if ($service->image) {
+            $oldPath = public_path('images/services/' . $service->image);
+
+            if (file_exists($oldPath)) {
+                unlink($oldPath);
+            }
         }
 
         $service->delete();
@@ -140,24 +120,18 @@ class ServiceController extends Controller
         ]);
     }
 
-    /**
-     * Handle image upload
-     */
     private function handleImageUpload($file): string
     {
-        // Generate unique filename
         $filename = time() . '_' . Str::random(10) . '.' . $file->getClientOriginalExtension();
 
-        // Ensure the directory exists
         $publicPath = public_path('images/services');
 
         if (!file_exists($publicPath)) {
             mkdir($publicPath, 0755, true);
         }
 
-        // Move the uploaded file to public directory
         $file->move($publicPath, $filename);
 
-        return $filename;
+        return '/images/services/' . $filename;
     }
 }

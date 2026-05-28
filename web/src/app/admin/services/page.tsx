@@ -1,380 +1,709 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useEffect, useState } from "react"
 import {
   Plus,
   Search,
-  Filter,
   Pencil,
   Trash2,
   Eye,
-  MoreHorizontal,
   ChevronLeft,
   ChevronRight,
-  Sparkles,
+  X,
   Stethoscope,
+  Sparkles,
+  AlertTriangle,
 } from "lucide-react"
 
 import ProtectedNav from "@/components/layout/ProtectedNavbar"
 
-const servicesData = [
-  {
-    id: 1,
-    name: "Dental Cleaning",
-    category: "Dental",
-    duration: "45 mins",
-    price: 1500,
-    status: "Active",
-  },
-  {
-    id: 2,
-    name: "Teeth Whitening",
-    category: "Dental",
-    duration: "1 hour",
-    price: 6500,
-    status: "Active",
-  },
-  {
-    id: 3,
-    name: "Root Canal",
-    category: "Dental",
-    duration: "2 hours",
-    price: 12000,
-    status: "Inactive",
-  },
-  {
-    id: 4,
-    name: "Botox Treatment",
-    category: "Aesthetic",
-    duration: "30 mins",
-    price: 8000,
-    status: "Active",
-  },
-  {
-    id: 5,
-    name: "Facial Rejuvenation",
-    category: "Aesthetic",
-    duration: "1 hour",
-    price: 5500,
-    status: "Active",
-  },
-  {
-    id: 6,
-    name: "Chemical Peel",
-    category: "Aesthetic",
-    duration: "40 mins",
-    price: 4500,
-    status: "Draft",
-  },
-  {
-    id: 7,
-    name: "Braces Installation",
-    category: "Dental",
-    duration: "3 hours",
-    price: 35000,
-    status: "Active",
-  },
-  {
-    id: 8,
-    name: "Laser Treatment",
-    category: "Aesthetic",
-    duration: "1 hour",
-    price: 9500,
-    status: "Active",
-  },
-]
+/* ─────────────────────────────────────────
+   TYPES
+───────────────────────────────────────── */
+type Service = {
+  id: number
+  name: string
+  category: string
+  duration?: string
+  price: number
+  status: "Active" | "Draft" | "Inactive"
+  description?: string
+  image?: string | null   // URL from API
+}
 
-const categories = ["All", "Dental", "Aesthetic"]
+type FormState = {
+  name: string
+  category: string
+  price: string
+  status: string
+  description: string
+  image: File | null
+}
 
+/* ─────────────────────────────────────────
+   CONSTANTS
+───────────────────────────────────────── */
+const CATEGORIES = ["All", "Dental", "Aesthetic"]
+
+const EMPTY_FORM: FormState = {
+  name: "",
+  category: "Dental",
+  price: "",
+  status: "Active",
+  description: "",
+  image: null,
+}
+
+/* ─────────────────────────────────────────
+   HELPERS
+───────────────────────────────────────── */
+function statusStyle(status: string) {
+  switch (status) {
+    case "Active":
+      return "bg-emerald-50 text-emerald-700 border border-emerald-200"
+    case "Draft":
+      return "bg-amber-50 text-amber-700 border border-amber-200"
+    default:
+      return "bg-red-50 text-red-700 border border-red-200"
+  }
+}
+
+function categoryIcon(category: string) {
+  return category === "Dental" ? (
+    <Stethoscope size={14} className="inline mr-1 opacity-60" />
+  ) : (
+    <Sparkles size={14} className="inline mr-1 opacity-60" />
+  )
+}
+
+/* ─────────────────────────────────────────
+   PAGE
+───────────────────────────────────────── */
 export default function ServicesPage() {
+  /* data */
+  const [services, setServices] = useState<Service[]>([])
+  const [loading, setLoading] = useState(false)
+  const [pagination, setPagination] = useState<any>(null)
+
+  /* filters */
   const [search, setSearch] = useState("")
   const [selectedCategory, setSelectedCategory] = useState("All")
+  const [page, setPage] = useState(1)
 
-  const filteredServices = useMemo(() => {
-    return servicesData.filter((service) => {
-      const matchesSearch = service.name
-        .toLowerCase()
-        .includes(search.toLowerCase())
+  /* modals */
+  const [modal, setModal] = useState<"create" | "edit" | "view" | "delete" | null>(null)
+  const [selected, setSelected] = useState<Service | null>(null)
 
-      const matchesCategory =
-        selectedCategory === "All" || service.category === selectedCategory
+  /* form */
+  const [form, setForm] = useState<FormState>(EMPTY_FORM)
 
-      return matchesSearch && matchesCategory
+  /* ── fetch ── */
+  const fetchServices = async () => {
+    setLoading(true)
+    const params = new URLSearchParams({
+      search,
+      category: selectedCategory === "All" ? "" : selectedCategory,
+      page: String(page),
     })
-  }, [search, selectedCategory])
-
-  const statusStyles = (status: string) => {
-    if (status === "Active") {
-      return "bg-emerald-50 text-emerald-700 border border-emerald-100"
-    }
-
-    if (status === "Draft") {
-      return "bg-amber-50 text-amber-700 border border-amber-100"
-    }
-
-    return "bg-red-50 text-red-700 border border-red-100"
+    const res = await fetch(`/api/services?${params}`, { cache: "no-store" })
+    const data = await res.json()
+    setServices(data.data || [])
+    setPagination(data)
+    setLoading(false)
   }
 
+  useEffect(() => {
+    fetchServices()
+  }, [search, selectedCategory, page])
+
+  /* ── crud ── */
+  const buildFormData = () => {
+    const fd = new FormData()
+    Object.entries(form).forEach(([k, v]) => {
+      if (v !== null && v !== "") fd.append(k, v as any)
+    })
+    return fd
+  }
+
+  const handleCreate = async () => {
+    await fetch("/api/services", { method: "POST", body: buildFormData() })
+    closeModal()
+    fetchServices()
+  }
+
+  const handleUpdate = async () => {
+    if (!selected) return
+    await fetch(`/api/services/${selected.id}`, { method: "PUT", body: buildFormData() })
+    closeModal()
+    fetchServices()
+  }
+
+  const handleDelete = async () => {
+    if (!selected) return
+    await fetch(`/api/services/${selected.id}`, { method: "DELETE" })
+    closeModal()
+    fetchServices()
+  }
+
+  /* ── modal helpers ── */
+  const openCreate = () => {
+    setForm(EMPTY_FORM)
+    setModal("create")
+  }
+
+  const openEdit = (s: Service) => {
+    setSelected(s)
+    setForm({ ...s, price: String(s.price), image: null })
+    setModal("edit")
+  }
+
+  const openView = (s: Service) => {
+    setSelected(s)
+    setModal("view")
+  }
+
+  const openDelete = (s: Service) => {
+    setSelected(s)
+    setModal("delete")
+  }
+
+  const closeModal = () => {
+    setModal(null)
+    setSelected(null)
+    setForm(EMPTY_FORM)
+  }
+
+  /* ─────────────────────────────────────────
+     RENDER
+  ───────────────────────────────────────── */
   return (
-    <div className="min-h-screen bg-[#f4f7fb]">
+    <div className="min-h-screen bg-slate-50 font-sans">
       <ProtectedNav userRole="admin" />
 
-      <main className="lg:ml-72 px-4 sm:px-6 lg:px-8 pt-20 lg:pt-8 pb-28 lg:pb-10">
-        {/* Header */}
-        <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-5 mb-8">
-          <div>
-            <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-slate-900">
-              Services Management
-            </h1>
+      <main className="lg:ml-72 px-4 sm:px-6 lg:px-8 pt-20 lg:pt-8 pb-24">
 
-            <p className="text-slate-500 mt-2 text-sm sm:text-base max-w-2xl">
-              Manage dental and aesthetic clinic services, pricing,
-              availability, and categories.
+        {/* ── Header ── */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8 pt-2">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
+              Services
+            </h1>
+            <p className="text-sm text-slate-500 mt-1">
+              Manage dental &amp; aesthetic clinic services
             </p>
           </div>
 
-          <button className="h-11 px-5 rounded-2xl bg-gradient-to-r from-blue-600 to-cyan-500 text-white text-sm font-semibold shadow-lg shadow-blue-100 hover:opacity-90 transition-all flex items-center justify-center gap-2 w-full sm:w-auto">
-            <Plus size={18} />
+          <button
+            onClick={openCreate}
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl
+                       bg-blue-600 hover:bg-blue-700 active:bg-blue-800
+                       text-white text-sm font-semibold shadow-sm
+                       transition-colors w-full sm:w-auto justify-center"
+          >
+            <Plus size={16} />
             Add Service
           </button>
         </div>
 
-        {/* Analytics */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5 mb-8">
-          {[
-            {
-              label: "Total Services",
-              value: "24",
-            },
-            {
-              label: "Dental Services",
-              value: "12",
-              icon: Stethoscope,
-            },
-            {
-              label: "Aesthetic Services",
-              value: "12",
-              icon: Sparkles,
-            },
-            {
-              label: "Monthly Revenue",
-              value: "₱327,500",
-            },
-          ].map((card, index) => {
-            const Icon = card.icon
+        {/* ── Filters ── */}
+        <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm mb-5">
+          {/* Search */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
+            <input
+              value={search}
+              onChange={(e) => { setSearch(e.target.value); setPage(1) }}
+              placeholder="Search services…"
+              className="w-full h-10 rounded-lg border border-slate-200 bg-slate-50
+                         pl-9 pr-4 text-sm text-slate-800 placeholder:text-slate-400
+                         focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
+                         transition"
+            />
+          </div>
 
-            return (
-              <div
-                key={index}
-                className="relative overflow-hidden rounded-3xl border border-slate-200 bg-white p-6 shadow-sm"
+          {/* Category pills */}
+          <div className="flex gap-2 mt-3 flex-wrap">
+            {CATEGORIES.map((c) => (
+              <button
+                key={c}
+                onClick={() => { setSelectedCategory(c); setPage(1) }}
+                className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors
+                  ${selectedCategory === c
+                    ? "bg-blue-600 text-white shadow-sm"
+                    : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                  }`}
               >
-                <div className="absolute top-0 right-0 w-28 h-28 rounded-full bg-blue-50 blur-3xl" />
-
-                <div className="relative z-10 flex items-start justify-between">
-                  <div>
-                    <p className="text-sm text-slate-500 mb-3">{card.label}</p>
-
-                    <h2 className="text-2xl font-bold text-slate-900 tracking-tight">
-                      {card.value}
-                    </h2>
-                  </div>
-
-                  {Icon && (
-                    <div className="w-12 h-12 rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-center">
-                      <Icon className="w-5 h-5 text-blue-600" />
-                    </div>
-                  )}
-                </div>
-              </div>
-            )
-          })}
-        </div>
-
-        {/* Filters */}
-        <div className="bg-white border border-slate-200 rounded-3xl p-4 sm:p-5 shadow-sm mb-6">
-          <div className="flex flex-col xl:flex-row gap-4 xl:items-center xl:justify-between">
-            <div className="flex flex-col sm:flex-row gap-3 w-full xl:max-w-3xl">
-              <div className="relative flex-1">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
-
-                <input
-                  type="text"
-                  placeholder="Search services..."
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  className="w-full h-12 rounded-2xl border border-slate-200 bg-slate-50 pl-11 pr-4 text-sm outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-400 transition-all"
-                />
-              </div>
-
-              <div className="flex items-center gap-2 overflow-x-auto pb-1">
-                {categories.map((category) => (
-                  <button
-                    key={category}
-                    onClick={() => setSelectedCategory(category)}
-                    className={`h-12 px-5 rounded-2xl text-sm font-medium whitespace-nowrap transition-all ${
-                      selectedCategory === category
-                        ? "bg-blue-600 text-white shadow-lg shadow-blue-100"
-                        : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-                    }`}
-                  >
-                    {category}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <button className="h-12 px-4 rounded-2xl border border-slate-200 bg-white text-slate-700 text-sm font-medium flex items-center justify-center gap-2 hover:bg-slate-50 transition-all">
-              <Filter size={16} />
-              Filters
-            </button>
+                {c}
+              </button>
+            ))}
           </div>
         </div>
 
-        {/* Table */}
-        <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[900px]">
-              <thead>
-                <tr className="border-b border-slate-200 bg-slate-50/80">
-                  <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-[0.15em] text-slate-500">
-                    Service
-                  </th>
+        {/* ── Table / Cards ── */}
+        <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
 
-                  <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-[0.15em] text-slate-500">
-                    Category
-                  </th>
+          {loading ? (
+            <div className="flex items-center justify-center py-16 text-slate-400 text-sm">
+              Loading services…
+            </div>
+          ) : services.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16 text-slate-400 gap-2">
+              <Search size={32} strokeWidth={1.5} />
+              <p className="text-sm">No services found</p>
+            </div>
+          ) : (
+            <>
+              {/* Desktop table – md and above */}
+              <div className="hidden md:block">
+                <table className="w-full text-sm table-fixed">
+                  <colgroup>
+                    <col className="w-[35%]" />
+                    <col className="w-[18%]" />
+                    <col className="w-[15%]" />
+                    <col className="w-[15%]" />
+                    <col className="w-[17%]" />
+                  </colgroup>
+                  <thead>
+                    <tr className="border-b border-slate-100 bg-slate-50">
+                      <th className="text-left px-5 py-3 font-semibold text-slate-500 uppercase tracking-wide text-xs">Service</th>
+                      <th className="text-left px-4 py-3 font-semibold text-slate-500 uppercase tracking-wide text-xs">Category</th>
+                      <th className="text-left px-4 py-3 font-semibold text-slate-500 uppercase tracking-wide text-xs">Price</th>
+                      <th className="text-left px-4 py-3 font-semibold text-slate-500 uppercase tracking-wide text-xs">Status</th>
+                      <th className="text-right px-5 py-3 font-semibold text-slate-500 uppercase tracking-wide text-xs">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-50">
+                    {services.map((s) => (
+                      <tr key={s.id} className="hover:bg-slate-50/80 transition-colors group">
+                        <td className="px-5 py-4">
+                          <div className="flex items-center gap-3 min-w-0">
+                            {s.image ? (
+                              <img
+                                src={s.image}
+                                alt={s.name}
+                                className="w-9 h-9 rounded-lg object-cover shrink-0 border border-slate-100"
+                              />
+                            ) : (
+                              <div className="w-9 h-9 rounded-lg bg-slate-100 shrink-0 flex items-center justify-center text-slate-400">
+                                <Stethoscope size={16} />
+                              </div>
+                            )}
+                            <span className="font-medium text-slate-900 truncate">{s.name}</span>
+                          </div>
+                        </td>
+                        <td className="px-4 py-4 text-slate-600">
+                          {categoryIcon(s.category)}{s.category}
+                        </td>
+                        <td className="px-4 py-4 text-slate-800 font-semibold">
+                          ₱{Number(s.price).toLocaleString()}
+                        </td>
+                        <td className="px-4 py-4">
+                          <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium ${statusStyle(s.status)}`}>
+                            {s.status}
+                          </span>
+                        </td>
+                        <td className="px-5 py-4">
+                          <div className="flex items-center justify-end gap-1">
+                            <ActionBtn icon={<Eye size={15} />} label="View" onClick={() => openView(s)} />
+                            <ActionBtn icon={<Pencil size={15} />} label="Edit" onClick={() => openEdit(s)} />
+                            <ActionBtn icon={<Trash2 size={15} />} label="Delete" onClick={() => openDelete(s)} danger />
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
 
-                  <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-[0.15em] text-slate-500">
-                    Duration
-                  </th>
-
-                  <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-[0.15em] text-slate-500">
-                    Price
-                  </th>
-
-                  <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-[0.15em] text-slate-500">
-                    Status
-                  </th>
-
-                  <th className="px-6 py-4 text-right text-xs font-semibold uppercase tracking-[0.15em] text-slate-500">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-
-              <tbody>
-                {filteredServices.map((service) => (
-                  <tr
-                    key={service.id}
-                    className="border-b border-slate-100 hover:bg-blue-50/30 transition-all"
-                  >
-                    <td className="px-6 py-5">
-                      <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-600 to-cyan-500 text-white flex items-center justify-center font-bold text-sm shadow-lg shadow-blue-100">
-                          {service.name
-                            .split(" ")
-                            .map((word) => word[0])
-                            .slice(0, 2)
-                            .join("")}
-                        </div>
-
-                        <div>
-                          <h3 className="text-sm font-semibold text-slate-900">
-                            {service.name}
-                          </h3>
-
-                          <p className="text-xs text-slate-500 mt-1">
-                            Service ID: #{service.id}
+              {/* Mobile cards – below md */}
+              <div className="md:hidden divide-y divide-slate-100">
+                {services.map((s) => (
+                  <div key={s.id} className="p-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-center gap-3 flex-1 min-w-0">
+                        {s.image ? (
+                          <img
+                            src={s.image}
+                            alt={s.name}
+                            className="w-10 h-10 rounded-lg object-cover shrink-0 border border-slate-100"
+                          />
+                        ) : (
+                          <div className="w-10 h-10 rounded-lg bg-slate-100 shrink-0 flex items-center justify-center text-slate-400">
+                            <Stethoscope size={16} />
+                          </div>
+                        )}
+                        <div className="min-w-0">
+                          <p className="font-semibold text-slate-900 truncate">{s.name}</p>
+                          <p className="text-xs text-slate-500 mt-0.5">
+                            {categoryIcon(s.category)}{s.category}
                           </p>
                         </div>
                       </div>
-                    </td>
-
-                    <td className="px-6 py-5">
-                      <span
-                        className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold ${
-                          service.category === "Dental"
-                            ? "bg-blue-50 text-blue-700 border border-blue-100"
-                            : "bg-cyan-50 text-cyan-700 border border-cyan-100"
-                        }`}
-                      >
-                        {service.category}
+                      <span className={`shrink-0 px-2.5 py-1 rounded-full text-xs font-medium ${statusStyle(s.status)}`}>
+                        {s.status}
                       </span>
-                    </td>
-
-                    <td className="px-6 py-5 text-sm text-slate-600">
-                      {service.duration}
-                    </td>
-
-                    <td className="px-6 py-5 text-sm font-semibold text-slate-900">
-                      ₱{service.price.toLocaleString()}
-                    </td>
-
-                    <td className="px-6 py-5">
-                      <span
-                        className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${statusStyles(
-                          service.status,
-                        )}`}
-                      >
-                        {service.status}
+                    </div>
+                    <div className="flex items-center justify-between mt-3">
+                      <span className="text-blue-600 font-semibold text-sm">
+                        ₱{Number(s.price).toLocaleString()}
                       </span>
-                    </td>
-
-                    <td className="px-6 py-5">
-                      <div className="flex items-center justify-end gap-2">
-                        <button className="w-10 h-10 rounded-xl border border-slate-200 bg-white text-slate-600 flex items-center justify-center hover:bg-slate-50 transition-all">
-                          <Eye size={16} />
-                        </button>
-
-                        <button className="w-10 h-10 rounded-xl border border-blue-100 bg-blue-50 text-blue-600 flex items-center justify-center hover:bg-blue-100 transition-all">
-                          <Pencil size={16} />
-                        </button>
-
-                        <button className="w-10 h-10 rounded-xl border border-red-100 bg-red-50 text-red-600 flex items-center justify-center hover:bg-red-100 transition-all">
-                          <Trash2 size={16} />
-                        </button>
-
-                        <button className="w-10 h-10 rounded-xl border border-slate-200 bg-white text-slate-600 flex items-center justify-center hover:bg-slate-50 transition-all">
-                          <MoreHorizontal size={16} />
-                        </button>
+                      <div className="flex gap-1">
+                        <ActionBtn icon={<Eye size={15} />} label="View" onClick={() => openView(s)} />
+                        <ActionBtn icon={<Pencil size={15} />} label="Edit" onClick={() => openEdit(s)} />
+                        <ActionBtn icon={<Trash2 size={15} />} label="Delete" onClick={() => openDelete(s)} danger />
                       </div>
-                    </td>
-                  </tr>
+                    </div>
+                  </div>
                 ))}
-              </tbody>
-            </table>
-          </div>
+              </div>
+            </>
+          )}
 
-          {/* Pagination */}
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-6 py-5 border-t border-slate-200 bg-slate-50/50">
-            <p className="text-sm text-slate-500 text-center sm:text-left">
-              Showing 1 to 8 of 24 services
-            </p>
+          {/* ── Pagination ── */}
+          <div className="flex items-center justify-between px-5 py-3 border-t border-slate-100 bg-slate-50/60">
+            {/* Prev */}
+            <button
+              disabled={page === 1}
+              onClick={() => setPage((p) => p - 1)}
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium
+                         border border-slate-200 bg-white text-slate-700
+                         hover:bg-slate-50 hover:border-slate-300
+                         disabled:opacity-40 disabled:cursor-not-allowed
+                         transition-colors shadow-sm"
+            >
+              <ChevronLeft size={15} />
+              Previous
+            </button>
 
-            <div className="flex items-center gap-2">
-              <button className="w-10 h-10 rounded-xl border border-slate-200 bg-white text-slate-600 flex items-center justify-center hover:bg-slate-50 transition-all">
-                <ChevronLeft size={16} />
-              </button>
+            {/* Page indicator */}
+            <span className="text-sm text-slate-500">
+              Page <span className="font-semibold text-slate-700">{page}</span>
+              {pagination?.totalPages && (
+                <> of <span className="font-semibold text-slate-700">{pagination.totalPages}</span></>
+              )}
+            </span>
 
-              <button className="w-10 h-10 rounded-xl bg-blue-600 text-white font-semibold text-sm shadow-lg shadow-blue-100">
-                1
-              </button>
-
-              <button className="w-10 h-10 rounded-xl border border-slate-200 bg-white text-slate-600 font-medium text-sm hover:bg-slate-50 transition-all">
-                2
-              </button>
-
-              <button className="w-10 h-10 rounded-xl border border-slate-200 bg-white text-slate-600 font-medium text-sm hover:bg-slate-50 transition-all">
-                3
-              </button>
-
-              <button className="w-10 h-10 rounded-xl border border-slate-200 bg-white text-slate-600 flex items-center justify-center hover:bg-slate-50 transition-all">
-                <ChevronRight size={16} />
-              </button>
-            </div>
+            {/* Next */}
+            <button
+              disabled={!!(pagination?.totalPages && page >= pagination.totalPages)}
+              onClick={() => setPage((p) => p + 1)}
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium
+                         border border-slate-200 bg-white text-slate-700
+                         hover:bg-slate-50 hover:border-slate-300
+                         disabled:opacity-40 disabled:cursor-not-allowed
+                         transition-colors shadow-sm"
+            >
+              Next
+              <ChevronRight size={15} />
+            </button>
           </div>
         </div>
       </main>
+
+      {/* ─────────────────────────────────────────
+          MODALS
+      ───────────────────────────────────────── */}
+
+      {modal === "create" && (
+        <Modal title="Add New Service" onClose={closeModal}>
+          <ServiceForm form={form} setForm={setForm} />
+          <ModalFooter>
+            <OutlineBtn onClick={closeModal}>Cancel</OutlineBtn>
+            <PrimaryBtn onClick={handleCreate}>Create Service</PrimaryBtn>
+          </ModalFooter>
+        </Modal>
+      )}
+
+      {modal === "edit" && selected && (
+        <Modal title="Edit Service" onClose={closeModal}>
+          <ServiceForm form={form} setForm={setForm} />
+          <ModalFooter>
+            <OutlineBtn onClick={closeModal}>Cancel</OutlineBtn>
+            <PrimaryBtn onClick={handleUpdate}>Save Changes</PrimaryBtn>
+          </ModalFooter>
+        </Modal>
+      )}
+
+      {modal === "view" && selected && (
+        <Modal title="Service Details" onClose={closeModal}>
+          <ViewService service={selected} />
+          <ModalFooter>
+            <PrimaryBtn onClick={closeModal}>Close</PrimaryBtn>
+          </ModalFooter>
+        </Modal>
+      )}
+
+      {modal === "delete" && selected && (
+        <Modal title="Delete Service" onClose={closeModal} size="sm">
+          <div className="flex flex-col items-center text-center gap-3 py-2">
+            <div className="w-12 h-12 rounded-full bg-red-50 flex items-center justify-center">
+              <AlertTriangle size={22} className="text-red-500" />
+            </div>
+            <div>
+              <p className="font-semibold text-slate-900">Delete "{selected.name}"?</p>
+              <p className="text-sm text-slate-500 mt-1">This action cannot be undone.</p>
+            </div>
+          </div>
+          <ModalFooter>
+            <OutlineBtn onClick={closeModal}>Cancel</OutlineBtn>
+            <DangerBtn onClick={handleDelete}>Delete</DangerBtn>
+          </ModalFooter>
+        </Modal>
+      )}
+    </div>
+  )
+}
+
+/* ─────────────────────────────────────────
+   SHARED UI COMPONENTS
+───────────────────────────────────────── */
+
+/* Modal wrapper */
+function Modal({
+  title,
+  children,
+  onClose,
+  size = "md",
+}: {
+  title: string
+  children: React.ReactNode
+  onClose: () => void
+  size?: "sm" | "md"
+}) {
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center
+                 bg-black/40 backdrop-blur-sm p-4"
+      onClick={(e) => e.target === e.currentTarget && onClose()}
+    >
+      <div
+        className={`bg-white rounded-2xl shadow-xl w-full
+          ${size === "sm" ? "max-w-sm" : "max-w-lg"}
+          max-h-[90vh] overflow-y-auto`}
+      >
+        {/* Modal header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+          <h2 className="font-semibold text-slate-900 text-base">{title}</h2>
+          <button
+            onClick={onClose}
+            className="w-8 h-8 rounded-full flex items-center justify-center
+                       text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition"
+          >
+            <X size={16} />
+          </button>
+        </div>
+
+        <div className="px-6 py-5">{children}</div>
+      </div>
+    </div>
+  )
+}
+
+/* Modal footer row */
+function ModalFooter({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="flex justify-end gap-2 pt-4 mt-2 border-t border-slate-100">
+      {children}
+    </div>
+  )
+}
+
+/* Buttons */
+function PrimaryBtn({ onClick, children }: { onClick: () => void; children: React.ReactNode }) {
+  return (
+    <button
+      onClick={onClick}
+      className="px-5 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white
+                 text-sm font-semibold transition-colors"
+    >
+      {children}
+    </button>
+  )
+}
+
+function OutlineBtn({ onClick, children }: { onClick: () => void; children: React.ReactNode }) {
+  return (
+    <button
+      onClick={onClick}
+      className="px-5 py-2 rounded-lg border border-slate-200 hover:bg-slate-50
+                 text-slate-700 text-sm font-medium transition-colors"
+    >
+      {children}
+    </button>
+  )
+}
+
+function DangerBtn({ onClick, children }: { onClick: () => void; children: React.ReactNode }) {
+  return (
+    <button
+      onClick={onClick}
+      className="px-5 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white
+                 text-sm font-semibold transition-colors"
+    >
+      {children}
+    </button>
+  )
+}
+
+/* Icon action button */
+function ActionBtn({
+  icon,
+  label,
+  onClick,
+  danger = false,
+}: {
+  icon: React.ReactNode
+  label: string
+  onClick: () => void
+  danger?: boolean
+}) {
+  return (
+    <button
+      onClick={onClick}
+      title={label}
+      className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors
+        ${danger
+          ? "text-slate-400 hover:text-red-600 hover:bg-red-50"
+          : "text-slate-400 hover:text-blue-600 hover:bg-blue-50"
+        }`}
+    >
+      {icon}
+    </button>
+  )
+}
+
+/* ─────────────────────────────────────────
+   SERVICE FORM
+───────────────────────────────────────── */
+function ServiceForm({
+  form,
+  setForm,
+}: {
+  form: FormState
+  setForm: (f: FormState) => void
+}) {
+  const field = (label: string, node: React.ReactNode) => (
+    <div>
+      <label className="block text-xs font-semibold text-slate-600 mb-1.5 uppercase tracking-wide">
+        {label}
+      </label>
+      {node}
+    </div>
+  )
+
+  const inputCls =
+    "w-full h-10 rounded-lg border border-slate-200 px-3 text-sm text-slate-800 bg-white " +
+    "focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+
+  return (
+    <div className="flex flex-col gap-4">
+      {field(
+        "Service Name",
+        <input
+          value={form.name}
+          onChange={(e) => setForm({ ...form, name: e.target.value })}
+          placeholder="e.g. Teeth Whitening"
+          className={inputCls}
+        />
+      )}
+
+      {field(
+        "Price (₱)",
+        <input
+          type="number"
+          value={form.price}
+          onChange={(e) => setForm({ ...form, price: e.target.value })}
+          placeholder="0.00"
+          className={inputCls}
+        />
+      )}
+
+      <div className="grid grid-cols-2 gap-3">
+        {field(
+          "Category",
+          <select
+            value={form.category}
+            onChange={(e) => setForm({ ...form, category: e.target.value })}
+            className={inputCls}
+          >
+            <option>Dental</option>
+            <option>Aesthetic</option>
+          </select>
+        )}
+
+        {field(
+          "Status",
+          <select
+            value={form.status}
+            onChange={(e) => setForm({ ...form, status: e.target.value })}
+            className={inputCls}
+          >
+            <option>Active</option>
+            <option>Draft</option>
+            <option>Inactive</option>
+          </select>
+        )}
+      </div>
+
+      {field(
+        "Description",
+        <textarea
+          value={form.description}
+          onChange={(e) => setForm({ ...form, description: e.target.value })}
+          placeholder="Brief description of the service…"
+          rows={3}
+          className={`${inputCls} h-auto py-2 resize-none`}
+        />
+      )}
+
+      {field(
+        "Image",
+        <input
+          type="file"
+          accept="image/*"
+          onChange={(e) => setForm({ ...form, image: e.target.files?.[0] ?? null })}
+          className="w-full text-sm text-slate-600 file:mr-3 file:py-1.5 file:px-4
+                     file:rounded-lg file:border-0 file:text-sm file:font-medium
+                     file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100
+                     cursor-pointer"
+        />
+      )}
+    </div>
+  )
+}
+
+/* ─────────────────────────────────────────
+   VIEW SERVICE (read-only detail)
+───────────────────────────────────────── */
+function ViewService({ service }: { service: Service }) {
+  const row = (label: string, value: React.ReactNode) => (
+    <div className="flex justify-between items-start gap-4 py-3 border-b border-slate-50 last:border-0">
+      <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide shrink-0">
+        {label}
+      </span>
+      <span className="text-sm text-slate-800 text-right">{value}</span>
+    </div>
+  )
+
+  return (
+    <div>
+      {service.image && (
+        <img
+          src={`${process.env.NEXT_PUBLIC_API_URL}${service.image}`}
+          alt={service.name}
+          className="w-full h-44 object-cover rounded-xl mb-5 border border-slate-100"
+        />
+      )}
+      {row("Name", <span className="font-semibold">{service.name}</span>)}
+      {row("Category", <>{categoryIcon(service.category)}{service.category}</>)}
+      {row("Price", <span className="font-semibold text-blue-600">₱{Number(service.price).toLocaleString()}</span>)}
+      {row(
+        "Status",
+        <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${statusStyle(service.status)}`}>
+          {service.status}
+        </span>
+      )}
+      {service.description && row("Description", service.description)}
     </div>
   )
 }
