@@ -344,7 +344,7 @@ export default function RootLayout({
     "@id": "https://mdsdental.com/#organization",
     name: "MDS Dental & Aesthetic Clinic",
     url: "https://mdsdental.com",
-    logo: "https://mdsdental.com/logo.jpg",
+    logo: "https://mdsdental.com/logo.png",
     image: "https://mdsdental.com/og-image.jpg",
     description:
       "Premium dental and aesthetic clinic serving Batangas, Philippines with expert dental care and advanced aesthetic treatments.",
@@ -623,7 +623,7 @@ export default function RootLayout({
         <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
 
         {/* Preload critical assets */}
-        <link rel="preload" as="image" href="/logo.jpg" />
+        <link rel="preload" as="image" href="/logo.png" />
 
         {/* Geographic meta tags — Batangas City */}
         <meta name="geo.region" content="PH-BAN" />

@@ -126,7 +126,7 @@ export default function ContactsAdmin() {
           {isDesktop && (
             <div className="sticky top-0 z-50 flex h-14 items-center gap-3 border-b bg-[#162A3A] px-4 shadow-sm">
               <SidebarTrigger className="-ml-1" />
-              <Image src="/logo.jpg" alt="Lumè Bean and Bar Logo" width={40} height={40} className="object-contain rounded-full" />
+              <Image src="/logo.png" alt="Lumè Bean and Bar Logo" width={40} height={40} className="object-contain rounded-full" />
               <h1 className={`${playfair.className} text-lg font-semibold text-white`}>Lumè Bean and Bar</h1>
             </div>
           )}
