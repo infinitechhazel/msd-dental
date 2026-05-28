@@ -1,5 +1,4 @@
 "use client"
-
 import { useState } from "react"
 import {
   Calendar,
@@ -17,6 +16,8 @@ import { motion } from "framer-motion"
 
 import ProtectedNav from "@/components/layout/ProtectedNavbar"
 import { useAuthStore } from "@/store/authStore"
+import { useEffect } from "react"
+import { useRouter } from "next/navigation"
 
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
@@ -111,6 +112,8 @@ function generateDays() {
 }
 
 export default function BookPage() {
+  const router = useRouter()
+
   const { user, isLoggedIn } = useAuthStore()
 
   const [service, setService] = useState("")
@@ -123,9 +126,18 @@ export default function BookPage() {
 
   const days = generateDays()
 
-  const selectedService = services.find(
-    (s) => s.value === service
-  )
+  const selectedService = services.find((s) => s.value === service)
+
+  useEffect(() => {
+    if (!isLoggedIn) {
+      router.push("/login?redirect=/book")
+    }
+  }, [isLoggedIn, router])
+
+  // prevent flashing page while redirecting
+  if (!isLoggedIn) {
+    return null
+  }
 
   if (submitted) {
     return (
@@ -171,9 +183,7 @@ export default function BookPage() {
                 A confirmation email has been sent to
               </p>
 
-              <p className="mt-1 font-semibold text-slate-900">
-                {email}
-              </p>
+              <p className="mt-1 font-semibold text-slate-900">{email}</p>
             </div>
           </motion.div>
         </div>
@@ -187,7 +197,6 @@ export default function BookPage() {
 
       <main className="lg:pl-64">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-10 pb-28 lg:pb-10">
-
           {/* HEADER */}
           <motion.div {...fade} className="mb-10">
             <h1 className="mt-5 text-4xl lg:text-5xl font-bold tracking-tight text-slate-900">
@@ -195,38 +204,27 @@ export default function BookPage() {
             </h1>
 
             <p className="mt-4 max-w-2xl text-slate-600 leading-relaxed">
-              Book your dental or aesthetic appointment
-              through our modern patient experience platform.
+              Book your dental or aesthetic appointment through our modern
+              patient experience platform.
             </p>
           </motion.div>
 
           <div className="grid gap-8 lg:grid-cols-3">
-
             {/* LEFT */}
             <div className="lg:col-span-2 space-y-6">
-
               {/* SERVICE */}
               <motion.div {...fade}>
                 <Card className="rounded-[30px] border border-slate-200 bg-white p-6 shadow-sm">
-                  <SectionTitle
-                    step="01"
-                    title="Select Service"
-                  />
+                  <SectionTitle step="01" title="Select Service" />
 
-                  <Select
-                    value={service}
-                    onValueChange={setService}
-                  >
+                  <Select value={service} onValueChange={setService}>
                     <SelectTrigger className="h-14 rounded-2xl border-slate-200 bg-slate-50 text-slate-900 focus:ring-4 focus:ring-blue-100">
                       <SelectValue placeholder="Choose a treatment or service" />
                     </SelectTrigger>
 
                     <SelectContent>
                       {services.map((s) => (
-                        <SelectItem
-                          key={s.value}
-                          value={s.value}
-                        >
+                        <SelectItem key={s.value} value={s.value}>
                           {s.label}
                         </SelectItem>
                       ))}
@@ -238,16 +236,12 @@ export default function BookPage() {
               {/* DATE */}
               <motion.div {...fade}>
                 <Card className="rounded-[30px] border border-slate-200 bg-white p-6 shadow-sm">
-                  <SectionTitle
-                    step="02"
-                    title="Choose Date"
-                  />
+                  <SectionTitle step="02" title="Choose Date" />
 
                   <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-7 gap-3">
                     {days.slice(0, 21).map((d, i) => {
                       const active =
-                        selectedDate?.toDateString() ===
-                        d.toDateString()
+                        selectedDate?.toDateString() === d.toDateString()
 
                       return (
                         <button
@@ -261,9 +255,7 @@ export default function BookPage() {
                         >
                           <p
                             className={`text-xs font-medium ${
-                              active
-                                ? "text-blue-100"
-                                : "text-slate-500"
+                              active ? "text-blue-100" : "text-slate-500"
                             }`}
                           >
                             {d.toLocaleDateString("en-US", {
@@ -284,10 +276,7 @@ export default function BookPage() {
               {/* TIME */}
               <motion.div {...fade}>
                 <Card className="rounded-[30px] border border-slate-200 bg-white p-6 shadow-sm">
-                  <SectionTitle
-                    step="03"
-                    title="Select Time"
-                  />
+                  <SectionTitle step="03" title="Select Time" />
 
                   <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 gap-3">
                     {timeSlots.map((t) => {
@@ -314,22 +303,16 @@ export default function BookPage() {
               {/* INFO */}
               <motion.div {...fade}>
                 <Card className="rounded-[30px] border border-slate-200 bg-white p-6 shadow-sm">
-                  <SectionTitle
-                    step="04"
-                    title="Your Information"
-                  />
+                  <SectionTitle step="04" title="Your Information" />
 
                   <div className="grid gap-5 md:grid-cols-2">
-
                     <Field
                       icon={<User className="h-4 w-4" />}
                       label="Full Name"
                     >
                       <Input
                         value={name}
-                        onChange={(e) =>
-                          setName(e.target.value)
-                        }
+                        onChange={(e) => setName(e.target.value)}
                         placeholder="Juan Dela Cruz"
                         className="h-14 rounded-2xl border-slate-200 bg-slate-50"
                       />
@@ -341,9 +324,7 @@ export default function BookPage() {
                     >
                       <Input
                         value={email}
-                        onChange={(e) =>
-                          setEmail(e.target.value)
-                        }
+                        onChange={(e) => setEmail(e.target.value)}
                         type="email"
                         placeholder="you@example.com"
                         className="h-14 rounded-2xl border-slate-200 bg-slate-50"
@@ -357,9 +338,7 @@ export default function BookPage() {
                     >
                       <Input
                         value={phone}
-                        onChange={(e) =>
-                          setPhone(e.target.value)
-                        }
+                        onChange={(e) => setPhone(e.target.value)}
                         placeholder="+63 912 345 6789"
                         className="h-14 rounded-2xl border-slate-200 bg-slate-50"
                       />
@@ -371,8 +350,8 @@ export default function BookPage() {
                       <ShieldCheck className="h-5 w-5 text-emerald-600 shrink-0" />
 
                       <p className="text-sm text-emerald-700">
-                        Your account information has been
-                        automatically filled for faster booking.
+                        Your account information has been automatically filled
+                        for faster booking.
                       </p>
                     </div>
                   )}
@@ -385,51 +364,37 @@ export default function BookPage() {
               <div className="sticky top-24">
                 <motion.div {...fade}>
                   <Card className="rounded-[30px] border border-slate-200 bg-white p-7 shadow-sm">
-
                     <h3 className="text-xl font-bold text-slate-900">
                       Appointment Summary
                     </h3>
 
                     <div className="mt-6 space-y-5">
-
                       <SummaryRow
                         label="Service"
-                        value={
-                          selectedService?.label || "—"
-                        }
+                        value={selectedService?.label || "—"}
                       />
 
                       <SummaryRow
                         label="Date"
                         value={
                           selectedDate
-                            ? selectedDate.toLocaleDateString(
-                                "en-US",
-                                {
-                                  month: "long",
-                                  day: "numeric",
-                                }
-                              )
+                            ? selectedDate.toLocaleDateString("en-US", {
+                                month: "long",
+                                day: "numeric",
+                              })
                             : "—"
                         }
                       />
 
-                      <SummaryRow
-                        label="Time"
-                        value={selectedTime || "—"}
-                      />
+                      <SummaryRow label="Time" value={selectedTime || "—"} />
 
                       <SummaryRow
                         label="Duration"
-                        value={
-                          selectedService?.duration || "—"
-                        }
+                        value={selectedService?.duration || "—"}
                       />
 
                       <div className="rounded-2xl bg-blue-50 border border-blue-100 p-5">
-                        <p className="text-sm text-slate-500">
-                          Starting Price
-                        </p>
+                        <p className="text-sm text-slate-500">Starting Price</p>
 
                         <p className="mt-2 text-3xl font-bold text-blue-700">
                           {selectedService?.price || "—"}
@@ -484,22 +449,14 @@ export default function BookPage() {
   )
 }
 
-function SectionTitle({
-  step,
-  title,
-}: {
-  step: string
-  title: string
-}) {
+function SectionTitle({ step, title }: { step: string; title: string }) {
   return (
     <div className="mb-6 flex items-center gap-3">
       <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-blue-600 text-sm font-bold text-white">
         {step}
       </div>
 
-      <h3 className="text-lg font-bold text-slate-900">
-        {title}
-      </h3>
+      <h3 className="text-lg font-bold text-slate-900">{title}</h3>
     </div>
   )
 }
@@ -527,22 +484,12 @@ function Field({
   )
 }
 
-function SummaryRow({
-  label,
-  value,
-}: {
-  label: string
-  value: string
-}) {
+function SummaryRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-center justify-between gap-4">
-      <p className="text-sm text-slate-500">
-        {label}
-      </p>
+      <p className="text-sm text-slate-500">{label}</p>
 
-      <p className="text-sm font-semibold text-slate-900 text-right">
-        {value}
-      </p>
+      <p className="text-sm font-semibold text-slate-900 text-right">{value}</p>
     </div>
   )
 }

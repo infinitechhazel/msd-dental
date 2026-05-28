@@ -3,9 +3,19 @@
 import type React from "react"
 import { useState } from "react"
 import { motion } from "framer-motion"
-import { User, Mail, Lock, Eye, EyeOff, Phone, ArrowLeftCircle } from "lucide-react"
+import {
+  User,
+  Mail,
+  Lock,
+  Eye,
+  EyeOff,
+  Phone,
+  ArrowLeftCircle,
+} from "lucide-react"
+
 import { useRouter } from "next/navigation"
 import Link from "next/link"
+
 import { Toaster } from "@/components/ui/sonner"
 import { toast } from "sonner"
 
@@ -14,9 +24,6 @@ export default function RegisterPage() {
     name: "",
     email: "",
     phone: "",
-    address: "",
-    city: "",
-    zip_code: "",
     password: "",
     password_confirmation: "",
   })
@@ -24,24 +31,40 @@ export default function RegisterPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+
   const router = useRouter()
 
   const handleInputChange = (field: keyof typeof formData, value: string) => {
     if (field === "phone") {
       const numbersOnly = value.replace(/\D/g, "")
-      setFormData((prev) => ({ ...prev, [field]: numbersOnly }))
+
+      setFormData((prev) => ({
+        ...prev,
+        [field]: numbersOnly,
+      }))
+
       return
     }
-    setFormData((prev) => ({ ...prev, [field]: value }))
+
+    setFormData((prev) => ({
+      ...prev,
+      [field]: value,
+    }))
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (!formData.name || !formData.email || !formData.password || !formData.password_confirmation) {
+    if (
+      !formData.name ||
+      !formData.email ||
+      !formData.password ||
+      !formData.password_confirmation
+    ) {
       toast.error("Missing Information", {
         description: "Please fill in all required fields.",
       })
+
       return
     }
 
@@ -49,6 +72,7 @@ export default function RegisterPage() {
       toast.error("Password Mismatch", {
         description: "Passwords do not match. Please check and try again.",
       })
+
       return
     }
 
@@ -56,6 +80,7 @@ export default function RegisterPage() {
       toast.error("Password Too Short", {
         description: "Password must be at least 8 characters long.",
       })
+
       return
     }
 
@@ -63,6 +88,7 @@ export default function RegisterPage() {
       toast.error("Invalid Phone Number", {
         description: "Phone number must be exactly 11 digits.",
       })
+
       return
     }
 
@@ -71,7 +97,9 @@ export default function RegisterPage() {
     try {
       const response = await fetch("/api/auth/register", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify(formData),
       })
 
@@ -82,7 +110,9 @@ export default function RegisterPage() {
           description: "Please check your email to verify your account.",
         })
 
-        setTimeout(() => router.push("/login"), 1500)
+        setTimeout(() => {
+          router.push("/login")
+        }, 1500)
       } else {
         toast.error("Registration Failed", {
           description: data.message || "Registration failed. Please try again.",
@@ -97,50 +127,26 @@ export default function RegisterPage() {
     }
   }
 
-  const Field = ({
-    label,
-    icon: Icon,
-    type = "text",
-    value,
-    onChange,
-    placeholder,
-  }: any) => (
-    <div className="space-y-1.5">
-      <label className="text-[11px] uppercase tracking-widest text-slate-400 flex items-center gap-2">
-        <Icon className="w-3.5 h-3.5 text-cyan-400" />
-        {label}
-      </label>
-
-      <input
-        type={type}
-        value={value}
-        onChange={onChange}
-        placeholder={placeholder}
-        className="w-full h-12 rounded-xl bg-[#060e1e] border border-white/[0.08]
-                   px-4 text-white placeholder:text-slate-600
-                   focus:outline-none focus:ring-2 focus:ring-cyan-400/10
-                   focus:border-cyan-400/50 transition"
-      />
-    </div>
-  )
-
   return (
     <>
       <div className="min-h-screen bg-[#020617] flex items-center justify-center px-4 py-10 relative overflow-hidden">
-
         {/* GRID */}
         <div
           className="absolute inset-0 opacity-[0.04]"
           style={{
-            backgroundImage: `linear-gradient(rgba(56,189,248,1) 1px, transparent 1px),
-                              linear-gradient(90deg, rgba(56,189,248,1) 1px, transparent 1px)`,
+            backgroundImage: `
+              linear-gradient(rgba(56,189,248,1) 1px, transparent 1px),
+              linear-gradient(90deg, rgba(56,189,248,1) 1px, transparent 1px)
+            `,
             backgroundSize: "48px 48px",
           }}
         />
 
         {/* GLOWS */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[700px] h-[400px] bg-cyan-500/10 blur-[120px] rounded-full" />
+
         <div className="absolute bottom-[-80px] left-[-60px] w-72 h-72 bg-blue-600/10 blur-[100px] rounded-full" />
+
         <div className="absolute top-1/3 right-[-80px] w-64 h-64 bg-sky-400/10 blur-[100px] rounded-full" />
 
         {/* CARD */}
@@ -151,15 +157,17 @@ export default function RegisterPage() {
         >
           <div className="absolute -inset-px rounded-2xl bg-gradient-to-b from-cyan-400/30 via-blue-500/10 to-transparent" />
 
-          <div className="relative bg-[#0a1628]/90 border border-white/[0.08]
-                          rounded-2xl p-6 sm:p-8 backdrop-blur-xl">
-
+          <div
+            className="relative bg-[#0a1628]/90 border border-white/[0.08]
+                       rounded-2xl p-6 sm:p-8 backdrop-blur-xl"
+          >
             {/* BACK */}
             <button
               onClick={() => router.back()}
               className="flex items-center gap-2 text-slate-500 hover:text-cyan-400 mb-6"
             >
               <ArrowLeftCircle className="w-5 h-5" />
+
               <span className="text-xs uppercase tracking-widest">Back</span>
             </button>
 
@@ -172,21 +180,20 @@ export default function RegisterPage() {
               <h1 className="text-2xl font-semibold text-white">
                 Create Account
               </h1>
+
               <p className="text-cyan-400/80 text-xs uppercase tracking-[0.2em] mt-1">
                 MSD Dental & Aesthetic Clinic
               </p>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-6">
-
-              {/* GRID RESPONSIVE FIELDS */}
+              {/* FIELDS */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-
                 <Field
                   label="Full Name"
                   icon={User}
                   value={formData.name}
-                  onChange={(e: any) => handleInputChange("name", e.target.value)}
+                  onChange={(e) => handleInputChange("name", e.target.value)}
                   placeholder="John Doe"
                 />
 
@@ -195,7 +202,7 @@ export default function RegisterPage() {
                   icon={Mail}
                   type="email"
                   value={formData.email}
-                  onChange={(e: any) => handleInputChange("email", e.target.value)}
+                  onChange={(e) => handleInputChange("email", e.target.value)}
                   placeholder="you@email.com"
                 />
 
@@ -204,7 +211,7 @@ export default function RegisterPage() {
                     label="Phone Number"
                     icon={Phone}
                     value={formData.phone}
-                    onChange={(e: any) => handleInputChange("phone", e.target.value)}
+                    onChange={(e) => handleInputChange("phone", e.target.value)}
                     placeholder="09123456789"
                   />
                 </div>
@@ -212,7 +219,6 @@ export default function RegisterPage() {
 
               {/* PASSWORDS */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-
                 {/* PASSWORD */}
                 <div className="space-y-1.5">
                   <label className="text-[11px] uppercase tracking-widest text-slate-400 flex items-center gap-2">
@@ -224,10 +230,13 @@ export default function RegisterPage() {
                     <input
                       type={showPassword ? "text" : "password"}
                       value={formData.password}
-                      onChange={(e) => handleInputChange("password", e.target.value)}
+                      onChange={(e) =>
+                        handleInputChange("password", e.target.value)
+                      }
                       className="w-full h-12 rounded-xl bg-[#060e1e] border border-white/[0.08]
                                  px-4 pr-10 text-white focus:ring-2 focus:ring-cyan-400/10"
                     />
+
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
@@ -250,17 +259,27 @@ export default function RegisterPage() {
                       type={showConfirmPassword ? "text" : "password"}
                       value={formData.password_confirmation}
                       onChange={(e) =>
-                        handleInputChange("password_confirmation", e.target.value)
+                        handleInputChange(
+                          "password_confirmation",
+                          e.target.value,
+                        )
                       }
                       className="w-full h-12 rounded-xl bg-[#060e1e] border border-white/[0.08]
                                  px-4 pr-10 text-white focus:ring-2 focus:ring-cyan-400/10"
                     />
+
                     <button
                       type="button"
-                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      onClick={() =>
+                        setShowConfirmPassword(!showConfirmPassword)
+                      }
                       className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400"
                     >
-                      {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                      {showConfirmPassword ? (
+                        <EyeOff size={16} />
+                      ) : (
+                        <Eye size={16} />
+                      )}
                     </button>
                   </div>
                 </div>
@@ -280,7 +299,10 @@ export default function RegisterPage() {
               {/* FOOTER */}
               <p className="text-center text-sm text-slate-500">
                 Already have an account?{" "}
-                <Link href="/login" className="text-cyan-400 hover:text-cyan-300">
+                <Link
+                  href="/login"
+                  className="text-cyan-400 hover:text-cyan-300"
+                >
                   Sign in
                 </Link>
               </p>
@@ -291,5 +313,41 @@ export default function RegisterPage() {
 
       <Toaster theme="dark" />
     </>
+  )
+}
+
+function Field({
+  label,
+  icon: Icon,
+  type = "text",
+  value,
+  onChange,
+  placeholder,
+}: {
+  label: string
+  icon: React.ElementType
+  type?: string
+  value: string
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void
+  placeholder: string
+}) {
+  return (
+    <div className="space-y-1.5">
+      <label className="text-[11px] uppercase tracking-widest text-slate-400 flex items-center gap-2">
+        <Icon className="w-3.5 h-3.5 text-cyan-400" />
+        {label}
+      </label>
+
+      <input
+        type={type}
+        value={value}
+        onChange={onChange}
+        placeholder={placeholder}
+        className="w-full h-12 rounded-xl bg-[#060e1e] border border-white/[0.08]
+                   px-4 text-white placeholder:text-slate-600
+                   focus:outline-none focus:ring-2 focus:ring-cyan-400/10
+                   focus:border-cyan-400/50 transition"
+      />
+    </div>
   )
 }
