@@ -17,6 +17,7 @@ use App\Http\Controllers\TestimonialController;
 use App\Http\Controllers\UserController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Admin\ServiceController;
 
 /*
 |--------------------------------------------------------------------------
@@ -185,3 +186,13 @@ Route::middleware('auth:sanctum')->group(function () {
 // Support Ticket Routes
 Route::apiResource('support-tickets', SupportTicketController::class);
 Route::put('/support-tickets/{supportTicket}', [SupportTicketController::class, 'update']);
+
+
+//Services
+
+
+Route::prefix('admin')->middleware(['auth:sanctum'])
+    ->group(function () {
+        Route::apiResource('services', ServiceController::class);
+
+    });

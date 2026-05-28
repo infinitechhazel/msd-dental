@@ -45,6 +45,7 @@ services:
       DB_DATABASE: ${MYSQL_DATABASE}
       DB_USERNAME: root
       DB_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      HOME: /tmp
 
     depends_on:
       - mysql
